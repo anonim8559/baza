@@ -115,27 +115,7 @@ const handleZdjecie = (e)=>{
       <Button onClick={handleSubmit} className="w-full">Dodaj</Button>
       </div>
     </div>
-      {/* {
-        samochody &&
-      <Card className="w-[400px]">
-        <CardTitle>{samochody[0].marka}</CardTitle>
-        <CardDescription>{samochody[0].model}</CardDescription>
-        <CardContent className="m-0 p-0">
-          <Image
-          src={pb.files.getUrl(samochody[0],samochody[0].zdjecie)}
-          alt={samochody[0].zdjecie}
-          width={500}
-          height={500}
-          className="rounded-md"/>
-        </CardContent>
-        <CardFooter>
-          <div className="flex justify-end w-full mt-5">
-            <Timer/> <p>czas parkowania:</p>
-            {samochody[0].czas_parkowania}
-          </div>
-        </CardFooter>
-      </Card>
-} */}
+     
     </div>
   );
 }
