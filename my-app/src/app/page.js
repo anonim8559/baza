@@ -7,12 +7,14 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button";
 import PocketBase from 'pocketbase'
 import { Timer } from "lucide-react";
+import { DeleteItem } from "@/components/deleteitem";
+import { EditItem } from "@/components/edititem";
 const pb = new PocketBase('http://172.16.15.163:8080')
 
 export default function Page() {
   const [samochody,setsamochody] =useState(null)
   const [dane,setdane] = useState({marka:null,model:null,czas_parkowania:null})
-  const [zdjecie,setzdjecie] =useState(null)
+  const [zdjecie,setzdjecie] = useState(null)
 
   useEffect(()=>{
     const getData = async()=>{
@@ -37,6 +39,7 @@ setdane((prev)=>({
 ...prev,
 [id]: e.target.value
 }))
+console.log(dane)
 
 }
 const handleSubmit = async ()=>{
@@ -44,7 +47,8 @@ const handleSubmit = async ()=>{
   formData.append("marka",dane.marka)
   formData.append("model",dane.model)
   formData.append("czas_parkowania",dane.czas_parkowania)
-  formData.append("zdjecie",dane.zdjecie)
+  //formData.append("zdjecie",zdjecie)
+  console.log(formData)
  try{
   const record = await pb.collection('samochody').create(FormData)
   setsamochody((prev)=>([
@@ -61,6 +65,28 @@ const handleZdjecie = (e)=>{
   setzdjecie(e.target.files[0])
 }
 
+const deleted = (id) => {
+setsamochody((prev)=>(
+prev.filter((el)=>{
+  return el.id != id
+}
+)
+)
+)}
+
+const updated = (item) => {
+  console.log(item)
+  var index = null
+  var tmpSamochody = [...samochody]
+  for(let i in samochody){
+    if(samochody[i].id == item.id)
+      index = i
+  }
+  tmpSamochody[index] = item
+  setsamochody()
+  console.log("index: "+index)
+}
+
   return (
     <div>
       <div className="flex w-full justify-center flex-wrap gap-5">
@@ -71,7 +97,7 @@ const handleZdjecie = (e)=>{
           
 
           
-            <Card className="w-[400px]">
+            <Card key={samochod.id} className="w-[400px]">
         <CardTitle>{samochod.marka}</CardTitle>
         <CardDescription>{samochod.model}</CardDescription>
         <CardContent className="m-0 p-0">
@@ -83,10 +109,17 @@ const handleZdjecie = (e)=>{
           className="rounded-md"/>
         </CardContent>
         <CardFooter>
-          <div className="flex justify-end w-full mt-5">
+          <div className="w-full flex justify-between">
+            <div className="mt-5">
+            <DeleteItem id={samochod.id} ondeleted={deleted}/>
+            <EditItem item={samochod} onupdated={updated}/>
+            </div>
+            <div className="flex justify-end mt-5">
             <Timer/> <p>czas parkowania:</p>
             {samochod.czas_parkowania}
           </div>
+          </div>
+          
         </CardFooter>
       </Card>
           )
