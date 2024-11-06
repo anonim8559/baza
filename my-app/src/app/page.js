@@ -1,154 +1,177 @@
-"use client"
+"use client";
 import { Card, CardContent, CardDescription, CardFooter, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import PocketBase from 'pocketbase'
-import { Timer } from "lucide-react";
+import PocketBase from 'pocketbase';
 import { DeleteItem } from "@/components/deleteitem";
 import { EditItem } from "@/components/edititem";
-const pb = new PocketBase('http://172.16.15.163:8080')
+import { Plus } from "lucide-react";
+import { Sheet, SheetTrigger, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet"; 
+import { Switch } from "@/components/ui/switch";
+
+
+
+const pb = new PocketBase('http://172.16.15.163:8080');
 
 export default function Page() {
-  const [samochody,setsamochody] =useState(null)
-  const [dane,setdane] = useState({marka:null,model:null,czas_parkowania:null})
-  const [zdjecie,setzdjecie] = useState(null)
+  const [gry, setGry] = useState(null);
+  const [isFormVisible, setIsFormVisible] = useState(false);
+  const [dane, setDane] = useState({
+    nazwa: '',
+    opis: '',
+    cena: '',
+    dostepnosc: false,
+  });
+  const [zdjecie, setZdjecie] = useState(null);
 
-  useEffect(()=>{
-    const getData = async()=>{
-      try{
-        const records = await pb.collection('samochody').getFullList({
-          sort: '-created'
-        })
-        console.log(records)
-        setsamochody(records)
-      }catch(err){
-        console.log(err)
+  useEffect(() => {
+    const getData = async () => {
+      try {
+        const records = await pb.collection('gry').getFullList({ sort: '-created' });
+        setGry(records);
+        
+      } catch (err) {
+        console.log("Error fetching data:", err);
       }
-      finally{
+    };
+    getData();
+  }, []);
 
-      }
+  const handleInputChange = (id, e) => {
+    const value = id === "dostepnosc" ? e.target.checked : e.target.value;
+    setDane((prev) => ({
+      ...prev,
+      [id]: value,
+    }));
+  };
+
+  const handleSubmit = async () => {
+    const formData = new FormData();
+    formData.append("nazwa", dane.nazwa);
+    formData.append("opis", dane.opis);
+    formData.append("cena", dane.cena);
+    formData.append("dostepnosc", dane.dostepnosc);
+    if (zdjecie) formData.append("zdjecie", zdjecie);
+
+    try {
+      const record = await pb.collection('gry').create(formData);
+      setGry((prev) => [...prev, record]);
+    } catch (err) {
+      console.log(err);
     }
-    getData()
-  },[])
+  };
 
-const handleInputChange = (id,e) =>{
-setdane((prev)=>({
-...prev,
-[id]: e.target.value
-}))
-console.log(dane)
+  const handleZdjecie = (e) => {
+    setZdjecie(e.target.files[0]);
+  };
 
-}
-const handleSubmit = async ()=>{
-  const formData = new FormData()
-  formData.append("marka",dane.marka)
-  formData.append("model",dane.model)
-  formData.append("czas_parkowania",dane.czas_parkowania)
-  //formData.append("zdjecie",zdjecie)
-  console.log(formData)
- try{
-  const record = await pb.collection('samochody').create(FormData)
-  setsamochody((prev)=>([
-    ...prev,
-    record
-  ]))
- }catch(err){
+  const toggleFormVisibility = () => {
+    setIsFormVisible((prev) => !prev);
+  };
 
- }
-}
+  const deleted = (id) => {
+    setGry((prev) => prev.filter((el) => el.id !== id));
+  };
 
-const handleZdjecie = (e)=>{
-  console.log(e)
-  setzdjecie(e.target.files[0])
-}
-
-const deleted = (id) => {
-setsamochody((prev)=>(
-prev.filter((el)=>{
-  return el.id != id
-}
-)
-)
-)}
-
-const updated = (item) => {
-  console.log(item)
-  var index = null
-  var tmpSamochody = [...samochody]
-  for(let i in samochody){
-    if(samochody[i].id == item.id)
-      index = i
-  }
-  tmpSamochody[index] = item
-  setsamochody()
-  console.log("index: "+index)
-}
+  const updated = (item) => {
+    const index = gry.findIndex((g) => g.id === item.id);
+    const updatedGry = [...gry];
+    updatedGry[index] = item;
+    setGry(updatedGry);
+  };
 
   return (
-    <div>
-      <div className="flex w-full justify-center flex-wrap gap-5">
-      {
-        samochody &&
-        
-        samochody.map((samochod)=>(
-          
-
-          
-            <Card key={samochod.id} className="w-[400px]">
-        <CardTitle>{samochod.marka}</CardTitle>
-        <CardDescription>{samochod.model}</CardDescription>
-        <CardContent className="m-0 p-0">
-          <Image
-          src={pb.files.getUrl(samochod,samochod.zdjecie)}
-          alt={samochod.zdjecie}
-          width={500}
-          height={500}
-          className="rounded-md"/>
-        </CardContent>
-        <CardFooter>
-          <div className="w-full flex justify-between">
-            <div className="mt-5">
-            <DeleteItem id={samochod.id} ondeleted={deleted}/>
-            <EditItem item={samochod} onupdated={updated}/>
-            </div>
-            <div className="flex justify-end mt-5">
-            <Timer/> <p>czas parkowania:</p>
-            {samochod.czas_parkowania}
-          </div>
-          </div>
-          
-        </CardFooter>
-      </Card>
-          )
-        )
-      }
-      </div>
-
-      <div className="mt-5 flex flex-col w-full items-center flex-wrap gap-5">
-      <div className="grid w-full max-w-sm items-center gap-1.5">
-      <Label htmlFor="marka">Marka</Label>
-      <Input onChange= {(e)=>{handleInputChange("marka",e)}} type="text" id="marka" placeholder="Marka" />
-      </div>
-      <div className="grid w-full max-w-sm items-center gap-1.5">
-      <Label htmlFor="model">Model</Label>
-      <Input onChange= {(e)=>{handleInputChange("model",e)}} type="text" id="model" placeholder="Model" />
-      </div>
-      <div className="grid w-full max-w-sm items-center gap-1.5">
-      <Label htmlFor="czas_parkowania">Czas parkowania</Label>
-      <Input onChange= {(e)=>{handleInputChange("czas_parkowania",e)}} type="number" id="czas_parkowania" placeholder="Czas parkowania" />
-      </div>
-      <div className="grid w-full max-w-sm items-center gap-1.5">
-      <Label htmlFor="zdjecie">Zdjecie</Label>
-      <Input  onChange= {(e)=>{handleZdjecie(e)}} type="file" id="zdjecie" placeholder="Zdjecie" />
-      </div>
-      <div className="grid w-full max-w-sm items-center gap-1.5">
-      <Button onClick={handleSubmit} className="w-full">Dodaj</Button>
-      </div>
-    </div>
+    
+    <div className="flex flex-wrap justify-center gap-10 py-10 bg-gray-100 min-h-screen">
      
+      {gry && gry.length > 0 ? (
+        gry.map((gra) => (
+          <Card key={gra.id} className="w-[400px] h-[500px] flex flex-col bg-white ">
+            <Image
+              src={pb.files.getUrl(gra, gra.zdjecie)}
+              alt={gra.zdjecie}
+              width={500}
+              height={500}
+              className="rounded-t-lg mx-auto object-cover"
+            />
+            <CardTitle className="text-center text-xl font-semibold mt-4">{gra.nazwa}</CardTitle>
+            <CardDescription className="text-center text-gray-600 mt-2">{gra.opis}</CardDescription>
+            <CardContent className="flex-1 p-0">
+            
+            </CardContent>
+            <CardFooter className="flex justify-between items-center p-4 bg-gray-50">
+              <div className="flex flex-col items-start">
+                <DeleteItem id={gra.id} ondeleted={deleted} />
+                <EditItem item={gra} onupdated={updated} />
+              </div>
+              <div className="flex flex-col items-end">
+                <p className="text-gray-800 font-semibold">Cena: {gra.cena} PLN</p>
+                <Switch
+                      id="dostepnosc"
+                      checked={gra.dostepnosc}
+                      onCheckedChange={(checked) => handleInputChange("dostepnosc", { target: { checked } })}
+                      className="rounded-full"
+                    />
+              </div>
+            </CardFooter>
+          </Card>
+        ))
+      ) : (
+        <p className="text-xl text-gray-500">Brak danych do wyświetlenia.</p>
+      )}
+
+   
+      
+
+    
+     
+      <div className="flex justify-center w-[400px] h-[500px]">
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button className="w-full h-full text-6xl" onClick={() => setIsFormVisible(true)}>
+              <Plus />
+            </Button>
+          </SheetTrigger>
+        
+          {isFormVisible && (
+            <SheetContent className="flex flex-col gap-4">
+              <SheetTitle className="text-center">Dodaj nową grę</SheetTitle>
+              <SheetDescription className="text-center">Wypełnij formularz, aby dodać grę</SheetDescription>
+              <div className="flex flex-col gap-4">
+                <div className="grid w-full max-w-sm items-center gap-1.5">
+                  <Label htmlFor="nazwa">Nazwa</Label>
+                  <Input onChange={(e) => handleInputChange("nazwa", e)} type="text" id="nazwa" placeholder="Nazwa gry" />
+                </div>
+                <div className="grid w-full max-w-sm items-center gap-1.5">
+                  <Label htmlFor="opis">Opis</Label>
+                  <Input onChange={(e) => handleInputChange("opis", e)} type="text" id="opis" placeholder="Opis gry" />
+                </div>
+                <div className="grid w-full max-w-sm items-center gap-1.5">
+                  <Label htmlFor="cena">Cena</Label>
+                  <Input onChange={(e) => handleInputChange("cena", e)} type="number" id="cena" placeholder="Cena gry" />
+                </div>
+                <div className="grid w-full max-w-sm items-center gap-1.5">
+                  <Label htmlFor="dostepnosc">Dostępność</Label>
+                  <Switch
+                    checked={dane.dostepnosc}
+                    onCheckedChange={(checked) => handleInputChange("dostepnosc", { target: { checked } })}
+                  />
+                </div>
+                <div className="grid w-full max-w-sm items-center gap-1.5">
+                  <Label htmlFor="zdjecie">Zdjęcie</Label>
+                  <Input onChange={handleZdjecie} type="file" id="zdjecie" />
+                </div>
+                <div className="grid w-full max-w-sm items-center gap-1.5">
+                  <Button onClick={handleSubmit}>Dodaj</Button>
+                </div>
+              </div>
+            </SheetContent>
+          )}
+        </Sheet>
+      </div>
     </div>
   );
 }
