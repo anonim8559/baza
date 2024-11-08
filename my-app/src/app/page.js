@@ -11,6 +11,7 @@ import { EditItem } from "@/components/edititem";
 import { Plus } from "lucide-react";
 import { Sheet, SheetTrigger, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet"; 
 import { Switch } from "@/components/ui/switch";
+import { User_avatar } from "@/components/user.avatar";
 
 
 
@@ -87,6 +88,8 @@ export default function Page() {
     
     <div className="flex flex-wrap justify-center gap-10 py-10 bg-gray-100 min-h-screen">
      
+<User_avatar/>
+
       {gry && gry.length > 0 ? (
         gry.map((gra) => (
           <Card key={gra.id} className="w-[400px] h-[500px] flex flex-col bg-white ">
@@ -155,10 +158,7 @@ export default function Page() {
                 </div>
                 <div className="grid w-full max-w-sm items-center gap-1.5">
                   <Label htmlFor="dostepnosc">Dostępność</Label>
-                  <Switch
-                    checked={dane.dostepnosc}
-                    onCheckedChange={(checked) => handleInputChange("dostepnosc", { target: { checked } })}
-                  />
+                  <Input onChange={(e) => handleInputChange("dostepnosc", e)} type="checkbox" id="dostepnosc" />
                 </div>
                 <div className="grid w-full max-w-sm items-center gap-1.5">
                   <Label htmlFor="zdjecie">Zdjęcie</Label>
@@ -173,5 +173,5 @@ export default function Page() {
         </Sheet>
       </div>
     </div>
-  );
+  ); 
 }
